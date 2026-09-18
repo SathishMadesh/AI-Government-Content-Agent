@@ -41,7 +41,7 @@ scheduler = BackgroundScheduler()
 scheduler.add_job(
     collect_new_releases,
     "interval",
-    minutes=10,
+    minutes=5,
     id="pib_collection_job",
     replace_existing=True
 )
