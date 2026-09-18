@@ -3,7 +3,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from apscheduler.schedulers.background import BackgroundScheduler
 from contextlib import asynccontextmanager
 
-from backend.app.database import get_connection
+from backend.app.database import get_connection, create_tables
 from backend.app.services.content_service import (
     update_approval_status,
     collect_new_releases
@@ -19,6 +19,8 @@ from backend.app.services.instagram_service import (
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
+    create_tables()
+    print("Database tables initialized.")
     scheduler.start()
     print("APScheduler started — checking PIB every hour.")
 
