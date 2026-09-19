@@ -31,6 +31,16 @@ def get_existing_ids():
     rows = connection.execute("""
         SELECT source_post_id
         FROM content_items
+        WHERE verification_status IN (
+            'LOW_PRIORITY',
+            'SKIPPED'
+        )
+        OR approval_status IN (
+            'WAITING_APPROVAL',
+            'APPROVED',
+            'REJECTED',
+            'PUBLISHED'
+        )
     """).fetchall()
 
     connection.close()
@@ -53,6 +63,13 @@ def save_release(release):
             approval_status
         )
         VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+        ON CONFLICT(source, source_post_id)
+        DO UPDATE SET
+            source_url = excluded.source_url,
+            source_date = excluded.source_date,
+            source_title = excluded.source_title,
+            source_text = excluded.source_text,
+            updated_at = CURRENT_TIMESTAMP
     """, (
         release["source"],
         release["source_post_id"],
@@ -180,10 +197,6 @@ def collect_new_releases():
                 release_data
             )
 
-            existing_ids.add(
-                release_id
-            )
-
             new_count += 1
 
             print(
@@ -226,6 +239,11 @@ def collect_new_releases():
 
                 not_relevant_count += 1
 
+                update_verification_status(
+                    release_data["source_post_id"],
+                    "SKIPPED"
+                )
+
                 print(
                     "\nSkipped: Not relevant"
                 )
@@ -239,6 +257,11 @@ def collect_new_releases():
             if priority == "LOW_PRIORITY":
 
                 low_priority_count += 1
+
+                update_verification_status(
+                    release_data["source_post_id"],
+                    "SKIPPED"
+                )
 
                 print(
                     "\nSkipped: Low priority news"

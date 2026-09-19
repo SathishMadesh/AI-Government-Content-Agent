@@ -1,6 +1,7 @@
 
 import json
 import re
+import os
 import httpx
 
 from dotenv import load_dotenv
@@ -9,11 +10,10 @@ from dotenv import load_dotenv
 load_dotenv()
 
 
-OLLAMA_MODEL = "gemma:2b"
+OLLAMA_API_KEY = os.getenv("OLLAMA_API_KEY")
+OLLAMA_MODEL = os.getenv("OLLAMA_MODEL")
 
-OLLAMA_URL = (
-    "http://localhost:11434/api/chat"
-)
+OLLAMA_URL = "https://ollama.com/api/chat"
 
 
 def generate_visual_concept(
@@ -119,6 +119,10 @@ Return exactly these four fields:
 
         response = httpx.post(
             OLLAMA_URL,
+            headers={
+                "Authorization": f"Bearer {OLLAMA_API_KEY}",
+                "Content-Type": "application/json"
+            },
             json=payload,
             timeout=120
         )
