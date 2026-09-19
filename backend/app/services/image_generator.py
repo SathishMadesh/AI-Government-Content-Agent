@@ -39,17 +39,35 @@ def get_font(
     bold=False
 ):
 
-    if bold:
+    if os.name == "nt":
 
-        font_path = (
-            "C:/Windows/Fonts/arialbd.ttf"
-        )
+        if bold:
+
+            font_path = (
+                "C:/Windows/Fonts/arialbd.ttf"
+            )
+
+        else:
+
+            font_path = (
+                "C:/Windows/Fonts/arial.ttf"
+            )
 
     else:
 
-        font_path = (
-            "C:/Windows/Fonts/arial.ttf"
-        )
+        if bold:
+
+            font_path = (
+                "/usr/share/fonts/truetype/dejavu/"
+                "DejaVuSans-Bold.ttf"
+            )
+
+        else:
+
+            font_path = (
+                "/usr/share/fonts/truetype/dejavu/"
+                "DejaVuSans.ttf"
+            )
 
     return ImageFont.truetype(
         font_path,
