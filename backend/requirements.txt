@@ -5,8 +5,5 @@ beautifulsoup4
 python-dotenv
 pydantic
 apscheduler==3.11.3
-huggingface_hub
-
 Pillow
-
 requests

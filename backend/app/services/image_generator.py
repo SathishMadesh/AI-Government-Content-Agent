@@ -2,18 +2,20 @@ import os
 import io
 import textwrap
 import httpx
+import base64
+import requests
 
 from dotenv import load_dotenv
-from huggingface_hub import InferenceClient
 
 from backend.app.services.visual_concept_generator import generate_visual_concept
 from backend.app.services.image_strategy import choose_image_strategy
 
 load_dotenv()
 
-HF_TOKEN = os.getenv("HF_TOKEN")
+CLOUDFLARE_ACCOUNT_ID = os.getenv("CLOUDFLARE_ACCOUNT_ID")
+CLOUDFLARE_API_TOKEN = os.getenv("CLOUDFLARE_API_TOKEN")
 
-HF_IMAGE_MODEL = "black-forest-labs/FLUX.1-schnell"
+CLOUDFLARE_IMAGE_MODEL = "@cf/black-forest-labs/flux-1-schnell"
 
 from PIL import (
     Image,
@@ -205,20 +207,50 @@ def generate_ai_background(image_prompt, source_post_id):
 
     print("\nGenerating AI background image...")
 
-    if not HF_TOKEN:
-        print("HF_TOKEN not found in .env")
+    if not CLOUDFLARE_ACCOUNT_ID:
+        print("CLOUDFLARE_ACCOUNT_ID not found in .env")
+        return None
+
+    if not CLOUDFLARE_API_TOKEN:
+        print("CLOUDFLARE_API_TOKEN not found in .env")
         return None
 
     try:
 
-        client = InferenceClient(
-            api_key=HF_TOKEN,
-            provider="auto"
+        url = (
+            f"https://api.cloudflare.com/client/v4/accounts/"
+            f"{CLOUDFLARE_ACCOUNT_ID}/ai/run/"
+            f"{CLOUDFLARE_IMAGE_MODEL}"
         )
 
-        image = client.text_to_image(
-            prompt=image_prompt,
-            model=HF_IMAGE_MODEL
+        response = requests.post(
+            url,
+            headers={
+                "Authorization": f"Bearer {CLOUDFLARE_API_TOKEN}",
+                "Content-Type": "application/json"
+            },
+            json={
+                "prompt": image_prompt
+            },
+            timeout=120
+        )
+
+        response.raise_for_status()
+
+        result = response.json()
+
+        image_base64 = (
+            result
+            .get("result", {})
+            .get("image")
+        )
+
+        if not image_base64:
+            print("\nCloudflare returned no image.")
+            return None
+
+        image_data = base64.b64decode(
+            image_base64
         )
 
         output_path = os.path.join(
@@ -226,9 +258,14 @@ def generate_ai_background(image_prompt, source_post_id):
             f"{source_post_id}_background.png"
         )
 
-        image.save(
-            output_path
-        )
+        with open(
+            output_path,
+            "wb"
+        ) as image_file:
+
+            image_file.write(
+                image_data
+            )
 
         print(
             "\nAI background created:"
