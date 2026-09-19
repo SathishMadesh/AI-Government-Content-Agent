@@ -44,16 +44,49 @@ def verify_generated_content(generated_content, source_text, verified_facts):
     event = verified_facts.get("event")
 
     if event:
+        event_words = re.findall(
+            r"\b[a-zA-Z]{4,}\b",
+            event.lower()
+        )
+
+        ignored_words = {
+            "prime",
+            "minister",
+            "shri",
+            "visit",
+            "today",
+            "will",
+            "with",
+            "from",
+            "into",
+            "over",
+            "about",
+            "that",
+            "this"
+        }
+
         event_keywords = [
-            "longest continuously serving",
-            "prime minister",
-            "italy"
+            word
+            for word in event_words
+            if word not in ignored_words
         ]
 
-        results["event"] = all(
-            keyword in combined_content
-            for keyword in event_keywords
-        )
+        if event_keywords:
+            matched_keywords = sum(
+                keyword in combined_content
+                for keyword in event_keywords
+            )
+
+            required_matches = max(
+                1,
+                len(event_keywords) // 2
+            )
+
+            results["event"] = (
+                matched_keywords >= required_matches
+            )
+        else:
+            results["event"] = True
     else:
         results["event"] = True
 

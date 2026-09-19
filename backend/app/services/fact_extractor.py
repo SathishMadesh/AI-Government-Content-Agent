@@ -3,7 +3,7 @@ import re
 
 def extract_facts(source_text):
     """
-    Extract basic structured facts from a PIB release.
+    Extract basic structured facts from a PIB/PMO release.
     """
 
     facts = {
@@ -14,37 +14,120 @@ def extract_facts(source_text):
         "date": None
     }
 
-    # Extract date
+    if not source_text:
+        return facts
+
+    text = source_text.strip()
+
+    # ---------------------------------------------------------
+    # Date
+    # ---------------------------------------------------------
+
     date_match = re.search(
-        r"(\d{2}\s+[A-Z]{3}\s+\d{4})",
-        source_text
+        r"\b(\d{2}\s+[A-Z]{3}\s+\d{4})\b",
+        text
     )
 
     if date_match:
         facts["date"] = date_match.group(1)
 
-    # Identify Narendra Modi as speaker when present
-    if "Prime Minister Shri Narendra Modi" in source_text:
-        facts["speaker"] = "Narendra Modi"
+    # ---------------------------------------------------------
+    # Speaker
+    # ---------------------------------------------------------
 
-    # Extract the person mentioned as the Italian Prime Minister
-    person_match = re.search(
-        r"Italian Prime Minister\s+([A-Z][A-Za-z]+\s+[A-Z][A-Za-z]+)",
-        source_text
-    )
+    speaker_patterns = [
+        r"Prime Minister Shri Narendra Modi",
+        r"Prime Minister Narendra Modi",
+        r"Shri Narendra Modi",
+        r"Narendra Modi"
+    ]
 
-    if person_match:
-        facts["person"] = person_match.group(1)
+    for pattern in speaker_patterns:
+        if re.search(pattern, text, re.IGNORECASE):
+            facts["speaker"] = "Narendra Modi"
+            break
 
-    # Identify country
-    if "Italy" in source_text or "Italian" in source_text:
-        facts["country"] = "Italy"
+    # ---------------------------------------------------------
+    # Person
+    # ---------------------------------------------------------
 
-    # Extract the main event from the title/body
-    if "longest continuously serving Prime Minister" in source_text:
-        facts["event"] = (
-            "Giorgia Meloni became the longest continuously serving "
-            "Prime Minister in Italy's postwar history"
+    person_patterns = [
+        r"Italian Prime Minister\s+([A-Z][A-Za-z]+(?:\s+[A-Z][A-Za-z]+)+)",
+        r"President\s+([A-Z][A-Za-z]+(?:\s+[A-Z][A-Za-z]+)+)",
+        r"Vice President\s+([A-Z][A-Za-z]+(?:\s+[A-Z][A-Za-z]+)+)"
+    ]
+
+    for pattern in person_patterns:
+
+        match = re.search(
+            pattern,
+            text
         )
+
+        if match:
+
+            candidate = match.group(1).strip()
+
+            if "Narendra Modi" not in candidate:
+
+                facts["person"] = candidate
+
+                break
+
+    # ---------------------------------------------------------
+    # Country
+    # ---------------------------------------------------------
+
+    country_patterns = [
+        "India",
+        "Italy",
+        "France",
+        "Germany",
+        "United States",
+        "United Kingdom",
+        "Japan",
+        "Australia",
+        "Canada",
+        "Russia",
+        "China",
+        "Brazil",
+        "South Africa"
+    ]
+
+    for country in country_patterns:
+        if re.search(rf"\b{re.escape(country)}\b", text, re.IGNORECASE):
+            facts["country"] = country
+            break
+
+    # ---------------------------------------------------------
+    # Event
+    # ---------------------------------------------------------
+
+    # Use the first meaningful title/headline line as the event.
+    lines = [
+        line.strip()
+        for line in text.splitlines()
+        if line.strip()
+    ]
+
+    for line in lines:
+
+        if len(line) < 20:
+            continue
+
+        if "Press Release Page" in line:
+            continue
+
+        if "Prime Minister's Office" in line:
+            continue
+
+        if line.startswith("Posted On:"):
+            continue
+
+        if "Visitor Counter" in line:
+            continue
+
+        facts["event"] = line
+        break
 
     return facts
