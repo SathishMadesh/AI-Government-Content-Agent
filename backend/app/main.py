@@ -1,6 +1,5 @@
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
-from apscheduler.schedulers.background import BackgroundScheduler
 from contextlib import asynccontextmanager
 
 from backend.app.database import get_connection, create_tables
@@ -21,13 +20,11 @@ from backend.app.services.instagram_service import (
 async def lifespan(app: FastAPI):
     create_tables()
     print("Database tables initialized.")
-    scheduler.start()
-    print("APScheduler started — checking PIB every hour.")
+
+    print("Starting official news collection...")
+    collect_new_releases()
 
     yield
-
-    scheduler.shutdown()
-    print("APScheduler stopped.")
 
 app = FastAPI(
     title="AI Government Content Repurposing Agent",
@@ -35,17 +32,6 @@ app = FastAPI(
     version="1.0.0",
     lifespan=lifespan
 )
-
-scheduler = BackgroundScheduler()
-
-scheduler.add_job(
-    collect_new_releases,
-    "interval",
-    minutes=1,
-    id="pib_collection_job",
-    replace_existing=True
-)
-
 
 
 GENERATED_IMAGES_DIR = Path("generated_images")
