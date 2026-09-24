@@ -6,7 +6,7 @@ function App() {
   const [loading, setLoading] = useState(true);
   const [message, setMessage] = useState("");
 
-  const API_URL = "http://127.0.0.1:8000";
+  const API_URL = "https://ai-government-content-agent.onrender.com";
 
   const loadPosts = async () => {
     try {
