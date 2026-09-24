@@ -5,6 +5,8 @@ from urllib.parse import urljoin
 from datetime import datetime, timedelta
 import re
 
+from zoneinfo import ZoneInfo
+
 PIB_PMO_URL = "https://www.pib.gov.in/AllRelease.aspx?MenuId=23&PMO=1&lang=1&reg=1"
 PIB_BASE_URL = "https://www.pib.gov.in"
 
@@ -127,6 +129,22 @@ def get_pmo_releases():
                 posted_date,
                 flags=re.IGNORECASE
             ).strip()
+
+        # --------------------------------
+        # ONLY KEEP TODAY'S RELEASES
+        # --------------------------------
+
+        parsed_date = parse_pib_date(posted_date)
+
+        if parsed_date is None:
+            continue
+
+        india_today = datetime.now(
+            ZoneInfo("Asia/Kolkata")
+        ).date()
+
+        if parsed_date.date() != india_today:
+            continue
 
         releases.append({
             "release_id": release_id,
