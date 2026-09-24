@@ -40,8 +40,27 @@ def create_tables():
         )
     """)
 
+    # Add publishing columns if they do not already exist
+    columns = {
+        row["name"]
+        for row in connection.execute("PRAGMA table_info(content_items)").fetchall()
+    }
+
+    if "publish_status" not in columns:
+        connection.execute("""
+            ALTER TABLE content_items
+            ADD COLUMN publish_status TEXT DEFAULT 'NOT_PUBLISHED'
+        """)
+
+    if "publish_error" not in columns:
+        connection.execute("""
+            ALTER TABLE content_items
+            ADD COLUMN publish_error TEXT
+        """)
+
     connection.commit()
     connection.close()
+
 
 
 if __name__ == "__main__":
