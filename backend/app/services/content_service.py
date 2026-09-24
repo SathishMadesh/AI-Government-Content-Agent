@@ -250,35 +250,23 @@ def collect_new_releases():
 
                 continue
 
+
             # --------------------------------
-            # LOW PRIORITY
+            # RELEVANT NEWS
             # --------------------------------
 
-            if priority == "LOW_PRIORITY":
+            if priority in [
+                "HIGH_PRIORITY",
+                "LOW_PRIORITY"
+            ]:
 
-                low_priority_count += 1
-
-                update_verification_status(
-                    release_data["source_post_id"],
-                    "SKIPPED"
-                )
+                if priority == "HIGH_PRIORITY":
+                    high_priority_count += 1
+                else:
+                    low_priority_count += 1     
 
                 print(
-                    "\nSkipped: Low priority news"
-                )
-
-                continue
-
-            # --------------------------------
-            # HIGH PRIORITY
-            # --------------------------------
-
-            if priority == "HIGH_PRIORITY":
-
-                high_priority_count += 1
-
-                print(
-                    "\nHigh priority news found!"
+                    "\nRelevant news found!"
                 )
 
                 # --------------------------------
