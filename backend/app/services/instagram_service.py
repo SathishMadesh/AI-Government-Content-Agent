@@ -1,4 +1,5 @@
 import os
+import time
 import requests
 from dotenv import load_dotenv
 
@@ -47,6 +48,21 @@ def create_media_container(image_url, caption):
 
     return response.json()
 
+def check_media_status(container_id):
+
+    url = f"{BASE_URL}/{container_id}"
+
+    params = {
+        "fields": "status_code,status",
+        "access_token": INSTAGRAM_ACCESS_TOKEN
+    }
+
+    response = requests.get(url, params=params)
+
+    print("Media Status Check:", response.status_code)
+    print("Response:", response.json())
+
+    return response.json()
 
 def publish_media(container_id):
 
@@ -111,7 +127,42 @@ def publish_to_instagram(image_path, caption):
     print("\nMedia Container Created:")
     print(container_id)
 
-    # Step 2: Publish media
+    # Step 2: Wait for Instagram to finish processing
+    max_attempts = 6
+
+    for attempt in range(max_attempts):
+
+        status_response = check_media_status(
+            container_id
+        )
+
+        status_code = status_response.get("status_code")
+
+        print(
+            f"Media processing status "
+            f"({attempt + 1}/{max_attempts}): "
+            f"{status_code}"
+        )
+
+        if status_code == "FINISHED":
+            break
+
+        if status_code == "ERROR":
+            return {
+                "success": False,
+                "error": str(status_response)
+            }
+
+        if attempt < max_attempts - 1:
+            time.sleep(5)
+
+    else:
+        return {
+            "success": False,
+            "error": "Instagram media was not ready after waiting."
+        }
+
+    # Step 3: Publish media
     publish_response = publish_media(
         container_id
     )
