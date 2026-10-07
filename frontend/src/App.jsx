@@ -5,8 +5,39 @@ function App() {
   const [posts, setPosts] = useState([]);
   const [loading, setLoading] = useState(true);
   const [message, setMessage] = useState("");
+  const [agentRunning, setAgentRunning] = useState(false);
 
   const API_URL = "https://ai-government-content-agent.onrender.com";
+
+  const runAgent = async () => {
+  try {
+    setAgentRunning(true);
+    setMessage("Agent is running...");
+
+    const response = await fetch(`${API_URL}/agent/run`, {
+      method: "POST",
+    });
+
+    const data = await response.json();
+
+    if (!response.ok || !data.success) {
+      throw new Error(
+        data.error || data.message || "Agent run failed"
+      );
+    }
+
+    setMessage(
+      "Agent completed successfully. Loading new posts..."
+    );
+
+    await loadPosts();
+
+  } catch (error) {
+    setMessage(error.message);
+  } finally {
+    setAgentRunning(false);
+  }
+};
 
   const loadPosts = async () => {
     try {
@@ -67,9 +98,22 @@ function App() {
     <div className="app">
 
       <header className="header">
-        <h1>Government Content Agent</h1>
-        <p>AI-generated content review dashboard</p>
-      </header>
+  <h1>Government Content Agent</h1>
+
+  <p>
+    AI-powered system that collects official government updates,
+    verifies relevant information, generates Instagram content,
+    and sends it for human approval.
+  </p>
+
+  <button
+    className="activate-button"
+    onClick={runAgent}
+    disabled={agentRunning}
+  >
+    {agentRunning ? "Agent Running..." : "Activate Agent"}
+  </button>
+</header>
 
       {message && (
         <div className="message">

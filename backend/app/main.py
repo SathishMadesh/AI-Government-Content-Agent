@@ -327,6 +327,26 @@ def approve_content(source_post_id: str):
             "error": result["error"]
         }
 
+@app.post("/agent/run")
+def run_agent():
+    print("Manual agent run triggered.")
+    
+    try:
+        collect_new_releases()
+
+        return {
+            "success": True,
+            "message": "Agent run completed successfully."
+        }
+
+    except Exception as e:
+        print("Agent run failed:", e)
+
+        return {
+            "success": False,
+            "message": "Agent run failed.",
+            "error": str(e)
+        }
 
 @app.post("/approval/{source_post_id}/reject")
 def reject_content(source_post_id: str):
